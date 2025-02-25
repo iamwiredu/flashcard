@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flash Card Memorization</title>
+    <style>
+        /* General page styling with a cool blue gradient background */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #89f7fe, #66a6ff);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        header button.active {
+            background: #2980b9;
+        }
+
+        main {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        /* Add Cards Mode */
+        .card-form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-form input,
+        .card-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .card-form button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #cardsList {
+            margin-top: 20px;
+        }
+
+        .card-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-item strong {
+            display: block;
+        }
+
+        .card-item button {
+            background: #e74c3c;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Review Mode */
+        .review-card {
+            background: #fff;
+            width: 300px;
+            height: 200px;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 18px;
+            padding: 20px;
+        }
+
+        /* Class to preserve whitespace formatting */
+        .review-text {
+            white-space: pre-wrap;
+        }
+
+        #reviewControls {
+            text-align: center;
+        }
+
+        #reviewControls button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Review mode options */
+        #reviewModeOptions {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #reviewModeOptions button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #reviewModeOptions button.active {
+            background: #2980b9;
+        }
+
+        /* Modal pop-up styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Textarea for JSON data in modal */
+        #dataTextArea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header with mode toggle buttons and Data Manager -->
+    <header>
+        <button id="addModeBtn" class="active">Add Cards</button>
+        <button id="reviewModeBtn">Review Cards</button>
+        <button id="dataManagerBtn">Manage Data</button>
+    </header>
+
+    <main>
+        <!-- Add Cards Mode -->
+        <div id="addContainer">
+            <h2>Add New Flash Card</h2>
+            <div class="card-form">
+                <input type="text" id="questionInput" placeholder="Enter your question" required />
+                <textarea id="answerInput" placeholder="Enter your answer" rows="3" required></textarea>
+                <button id="addCardBtn">Add Flash Card</button>
+            </div>
+            <div id="cardsList">
+                <!-- Existing cards will be listed here -->
+            </div>
+        </div>
+
+        <!-- Review Cards Mode -->
+        <div id="reviewContainer" style="display:none;">
+            <h2>Review Flash Cards</h2>
+            <!-- Choose between reviewing all cards or just extra flagged ones -->
+            <div id="reviewModeOptions">
+                <button id="reviewAllBtn" class="active">Review All</button>
+                <button id="reviewExtraBtn">Review Extra</button>
+            </div>
+            <div id="reviewCard" class="review-card">
+                <!-- A single flash card will appear here -->
+            </div>
+            <div id="reviewControls">
+                <button id="toggleQA">Show Answer</button>
+                <button id="toggleExtra">Mark for Extra Review</button>
+                <button id="editCard">Edit Card</button>
+                <button id="nextCard">Next Card</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for editing a card -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h2>Edit Flash Card</h2>
+            <input type="text" id="editQuestion" placeholder="Edit question"
+                style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:4px;" />
+            <textarea id="editAnswer" placeholder="Edit answer" rows="3"
+                style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:4px;"></textarea>
+            <div style="text-align: right;">
+                <button id="cancelEditBtn"
+                    style="background:#e74c3c; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Cancel</button>
+                <button id="saveEditBtn"
+                    style="background:#3498db; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Import/Export Data -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <span id="closeDataModal" class="close">&times;</span>
+            <h2>Import / Export Data</h2>
+            <textarea id="dataTextArea" placeholder="Your JSON data will appear here"></textarea>
+            <div style="text-align: right;">
+                <button id="importDataBtn"
+                    style="background:#3498db; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Import
+                    Data</button>
+                <button id="copyDataBtn"
+                    style="background:#2980b9; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Copy
+                    to Clipboard</button>
+                <button id="cancelDataBtn"
+                    style="background:#e74c3c; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Load flash cards from localStorage or initialize an empty array.
+            let flashCards = JSON.parse(localStorage.getItem('flashCards')) || [];
+            let currentEditingIndex = null;  // For editing modal.
+
+            // Review mode variables.
+            let currentReviewMode = "all"; // "all" or "extra"
+            let currentReviewIndex = 0;
+            let isShowingAnswer = false;
+            let currentReviewCard = null; // Holds the card currently being shown
+
+            // Save flash cards to localStorage.
+            function saveFlashCards() {
+                localStorage.setItem('flashCards', JSON.stringify(flashCards));
+            }
+
+            // Render the list of cards in Add Cards mode.
+            function renderCardsList() {
+                const cardsList = document.getElementById('cardsList');
+                cardsList.innerHTML = '';
+                flashCards.forEach((card) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card-item';
+                    cardDiv.innerHTML = `<div>
+                                <strong>${card.question}</strong>
+                                ${card.extraReview ? '<span style="color:#e74c3c;">[Extra]</span>' : ''}
+                               </div>`;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', () => {
+                        if (confirm('Delete this card?')) {
+                            flashCards = flashCards.filter(c => c.id !== card.id);
+                            saveFlashCards();
+                            renderCardsList();
+                        }
+                    });
+                    cardDiv.appendChild(deleteBtn);
+                    cardsList.appendChild(cardDiv);
+                });
+            }
+
+            // Add card form event.
+            document.getElementById('addCardBtn').addEventListener('click', () => {
+                const question = document.getElementById('questionInput').value.trim();
+                const answer = document.getElementById('answerInput').value.trim();
+                if (question && answer) {
+                    const uniqueId = Date.now().toString() + '_' + Math.floor(Math.random() * 10000).toString();
+                    flashCards.push({ id: uniqueId, question, answer, extraReview: false });
+                    saveFlashCards();
+                    renderCardsList();
+                    document.getElementById('questionInput').value = '';
+                    document.getElementById('answerInput').value = '';
+                } else {
+                    alert('Please fill in both the question and the answer.');
+                }
+            });
+
+            // Tab switching between Add and Review modes.
+            const addModeBtn = document.getElementById('addModeBtn');
+            const reviewModeBtn = document.getElementById('reviewModeBtn');
+            const addContainer = document.getElementById('addContainer');
+            const reviewContainer = document.getElementById('reviewContainer');
+
+            addModeBtn.addEventListener('click', () => {
+                addContainer.style.display = 'block';
+                reviewContainer.style.display = 'none';
+                addModeBtn.classList.add('active');
+                reviewModeBtn.classList.remove('active');
+            });
+            reviewModeBtn.addEventListener('click', () => {
+                addContainer.style.display = 'none';
+                reviewContainer.style.display = 'block';
+                reviewModeBtn.classList.add('active');
+                addModeBtn.classList.remove('active');
+                currentReviewMode = "all";
+                document.getElementById('reviewAllBtn').classList.add('active');
+                document.getElementById('reviewExtraBtn').classList.remove('active');
+                currentReviewIndex = 0;
+                isShowingAnswer = false;
+                updateReviewCardDisplay();
+            });
+
+            // Review mode option buttons.
+            const reviewAllBtn = document.getElementById('reviewAllBtn');
+            const reviewExtraBtn = document.getElementById('reviewExtraBtn');
+
+            reviewAllBtn.addEventListener('click', () => {
+                currentReviewMode = "all";
+                reviewAllBtn.classList.add('active');
+                reviewExtraBtn.classList.remove('active');
+                currentReviewIndex = 0;
+                isShowingAnswer = false;
+                updateReviewCardDisplay();
+            });
+
+            reviewExtraBtn.addEventListener('click', () => {
+                currentReviewMode = "extra";
+                reviewExtraBtn.classList.add('active');
+                reviewAllBtn.classList.remove('active');
+                currentReviewIndex = 0;
+                isShowingAnswer = false;
+                updateReviewCardDisplay();
+            });
+
+            // Return the list of cards based on current review mode.
+            function getReviewList() {
+                return currentReviewMode === "all"
+                    ? flashCards
+                    : flashCards.filter(card => card.extraReview);
+            }
+
+            // Update the review card display and save the currently shown card.
+            function updateReviewCardDisplay() {
+                const reviewCardDiv = document.getElementById('reviewCard');
+                const reviewList = getReviewList();
+                if (reviewList.length === 0) {
+                    reviewCardDiv.textContent = "No flash cards available in this review mode.";
+                    currentReviewCard = null;
+                    return;
+                }
+                if (currentReviewIndex >= reviewList.length) {
+                    currentReviewIndex = 0;
+                }
+                currentReviewCard = reviewList[currentReviewIndex];
+                reviewCardDiv.innerHTML = `<div class="review-text">${isShowingAnswer ? currentReviewCard.answer : currentReviewCard.question}</div>`;
+                document.getElementById('toggleQA').textContent = isShowingAnswer ? "Show Question" : "Show Answer";
+                document.getElementById('toggleExtra').textContent = currentReviewCard.extraReview ? "Unmark Extra Review" : "Mark for Extra Review";
+            }
+
+            // Toggle between showing question and answer.
+            document.getElementById('toggleQA').addEventListener('click', () => {
+                isShowingAnswer = !isShowingAnswer;
+                updateReviewCardDisplay();
+            });
+
+            // Toggle the extra review flag for the current card.
+            document.getElementById('toggleExtra').addEventListener('click', () => {
+                if (!currentReviewCard) return;
+                let indexInAll = flashCards.indexOf(currentReviewCard);
+                if (indexInAll !== -1) {
+                    flashCards[indexInAll].extraReview = !flashCards[indexInAll].extraReview;
+                    saveFlashCards();
+                    updateReviewCardDisplay();
+                    renderCardsList();
+                }
+            });
+
+            // Modal elements for editing a card.
+            const editModal = document.getElementById("editModal");
+            const editQuestionInput = document.getElementById("editQuestion");
+            const editAnswerInput = document.getElementById("editAnswer");
+            const saveEditBtn = document.getElementById("saveEditBtn");
+            const cancelEditBtn = document.getElementById("cancelEditBtn");
+            const closeModalSpan = document.getElementById("closeModal");
+
+            // Edit the current card using the modal pop-up.
+            document.getElementById('editCard').addEventListener('click', () => {
+                if (!currentReviewCard) return;
+                let indexInAll = flashCards.indexOf(currentReviewCard);
+                if (indexInAll !== -1) {
+                    editQuestionInput.value = flashCards[indexInAll].question;
+                    editAnswerInput.value = flashCards[indexInAll].answer;
+                    currentEditingIndex = indexInAll;
+                    editModal.style.display = "block";
+                }
+            });
+
+            // Save changes from the edit modal.
+            saveEditBtn.addEventListener("click", () => {
+                if (currentEditingIndex !== null) {
+                    let newQuestion = editQuestionInput.value.trim();
+                    let newAnswer = editAnswerInput.value.trim();
+                    if (newQuestion === "" || newAnswer === "") {
+                        alert("Both question and answer must be non-empty.");
+                        return;
+                    }
+                    flashCards[currentEditingIndex].question = newQuestion;
+                    flashCards[currentEditingIndex].answer = newAnswer;
+                    saveFlashCards();
+                    updateReviewCardDisplay();
+                    renderCardsList();
+                    editModal.style.display = "none";
+                    currentEditingIndex = null;
+                }
+            });
+
+            // Cancel editing.
+            cancelEditBtn.addEventListener("click", () => {
+                editModal.style.display = "none";
+                currentEditingIndex = null;
+            });
+            closeModalSpan.addEventListener("click", () => {
+                editModal.style.display = "none";
+                currentEditingIndex = null;
+            });
+            window.addEventListener("click", (event) => {
+                if (event.target == editModal) {
+                    editModal.style.display = "none";
+                    currentEditingIndex = null;
+                }
+            });
+
+            // Next card functionality.
+            document.getElementById('nextCard').addEventListener('click', () => {
+                const reviewList = getReviewList();
+                if (reviewList.length === 0) return;
+                currentReviewIndex = (currentReviewIndex + 1) % reviewList.length;
+                isShowingAnswer = false;
+                updateReviewCardDisplay();
+            });
+
+            /* ------------------------- Data Manager Modal ------------------------- */
+            const dataManagerBtn = document.getElementById('dataManagerBtn');
+            const dataModal = document.getElementById('dataModal');
+            const closeDataModal = document.getElementById('closeDataModal');
+            const dataTextArea = document.getElementById('dataTextArea');
+            const importDataBtn = document.getElementById('importDataBtn');
+            const copyDataBtn = document.getElementById('copyDataBtn');
+            const cancelDataBtn = document.getElementById('cancelDataBtn');
+
+            // When the "Manage Data" button is clicked, show the data modal.
+            dataManagerBtn.addEventListener('click', () => {
+                dataTextArea.value = JSON.stringify(flashCards, null, 2);
+                dataModal.style.display = 'block';
+            });
+
+            // Copy the JSON data to clipboard.
+            copyDataBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(dataTextArea.value)
+                    .then(() => {
+                        alert("Data copied to clipboard.");
+                    })
+                    .catch(() => {
+                        alert("Unable to copy data.");
+                    });
+            });
+
+            // Import data from the textarea. This will replace localStorage data.
+            importDataBtn.addEventListener('click', () => {
+                try {
+                    const importedData = JSON.parse(dataTextArea.value);
+                    if (!Array.isArray(importedData)) {
+                        throw new Error("Data must be an array.");
+                    }
+                    flashCards = importedData;
+                    saveFlashCards();
+                    renderCardsList();
+                    updateReviewCardDisplay();
+                    alert("Data imported successfully.");
+                    dataModal.style.display = 'none';
+                } catch (error) {
+                    alert("Error importing data: " + error.message);
+                }
+            });
+
+            // Cancel and close the data modal.
+            cancelDataBtn.addEventListener('click', () => {
+                dataModal.style.display = 'none';
+            });
+            document.getElementById('closeDataModal').addEventListener('click', () => {
+                dataModal.style.display = 'none';
+            });
+            window.addEventListener("click", (event) => {
+                if (event.target == dataModal) {
+                    dataModal.style.display = "none";
+                }
+            });
+
+            /* ------------------------- End Data Manager ------------------------- */
+
+            // Initial render.
+            renderCardsList();
+        });
+    </script>
+</body>
+
+</html>
